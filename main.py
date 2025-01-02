@@ -6,7 +6,7 @@ import kagglehub
 
 
 
-df = pd.read_csv("global_tech_salary.txt")
+df = pd.read_csv("nycJobs.csv")
 
 
 def cleanData(df):
@@ -20,7 +20,11 @@ def cleanData(df):
             return df
 
 
-cleanData(df)
+
+print(df.dtypes)
+
+
+
 
 
 
