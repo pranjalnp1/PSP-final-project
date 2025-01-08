@@ -1,0 +1,30 @@
+version: 2.1
+
+executors:
+  python-executor:
+    docker:
+      - image: circleci/python:3.8  # You can change this to the version you use
+    working_directory: ~/repo
+
+jobs:
+  test:
+    executor: python-executor
+    steps:
+      - checkout  # This checks out the code from your GitHub repository
+      - run:
+          name: Install dependencies
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt  # Make sure to create a requirements.txt file
+      - run:
+          name: Run tests
+          command: |
+            . venv/bin/activate
+            pytest test.py  # Run tests from your test.py file, adjust if needed
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
