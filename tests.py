@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from main import clean_nyc_jobs_data
 from main import time_graph_job_listings
+from main import current_tech_positions
 
 class TestNYCJobsDataCleaning(unittest.TestCase):
     def setUp(self):
@@ -50,14 +51,9 @@ class TestNYCJobsDataCleaning(unittest.TestCase):
         cleaned_df = clean_nyc_jobs_data(self.test_data)
         self.assertTrue(pd.api.types.is_datetime64_dtype(cleaned_df['posting_date']),
                        "Date columns should be converted to datetime")
-
 # Run the tests
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)
-
-
-
-
 
 class TestTimeGraphJobListings(unittest.TestCase):
 
@@ -126,3 +122,54 @@ class TestTimeGraphJobListings(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main(argv=[''], exit=False)
+
+
+
+
+class TestCurrentTechPositions(unittest.TestCase):
+
+    def setUp(self):
+        # Create a mock dataset for testing
+        self.mock_data = pd.DataFrame({
+            'business_title': [
+                'Software Engineer', 'Data Scientist', 'Cybersecurity Analyst',
+                'IT Support Specialist', 'Non-Tech Role'
+            ],
+            'job_description': [
+                'Develop software applications', 'Analyze data and build models',
+                'Monitor and secure systems', 'Provide IT support', 'Manage office tasks'
+            ],
+            'career_level': ['Entry', 'Mid', 'Senior', 'Entry', 'Entry'],
+            '#_of_positions': [5, 3, 2, 4, 1]
+        })
+
+    def test_tech_job_filtering(self):
+        # Test if tech jobs are correctly filtered
+        tech_keywords = [
+            'software', 'developer', 'programming', 'coder', 'data scientist', 'data analyst',
+            'machine learning', 'security', 'cyber', 'it ', 'information technology'
+        ]
+        self.mock_data['combined_text'] = self.mock_data['business_title'].str.lower() + ' ' + self.mock_data['job_description'].str.lower()
+        tech_jobs = self.mock_data[self.mock_data['combined_text'].str.contains('|'.join(tech_keywords), na=False)]
+        self.assertEqual(len(tech_jobs), 4)  # 4 out of 5 rows are tech-related
+
+    def test_grouping_by_career_level(self):
+        # Test grouping by career level and summing positions
+        self.mock_data['combined_text'] = self.mock_data['business_title'].str.lower() + ' ' + self.mock_data['job_description'].str.lower()
+        tech_jobs = self.mock_data[self.mock_data['combined_text'].str.contains('|'.join(['software', 'data', 'cyber', 'it']), na=False)]
+        tech_jobs_grouped = tech_jobs.groupby('career_level')['#_of_positions'].sum().reset_index()
+        self.assertEqual(tech_jobs_grouped.loc[tech_jobs_grouped['career_level'] == 'Entry', '#_of_positions'].values[0], 9)
+
+    def test_job_listings_count(self):
+        # Test counting job listings for each career level
+        self.mock_data['combined_text'] = self.mock_data['business_title'].str.lower() + ' ' + self.mock_data['job_description'].str.lower()
+        tech_jobs = self.mock_data[self.mock_data['combined_text'].str.contains('|'.join(['software', 'data', 'cyber', 'it']), na=False)]
+        job_counts = tech_jobs['career_level'].value_counts().reset_index()
+        job_counts.columns = ['career_level', 'job_listings']
+        self.assertEqual(job_counts.loc[job_counts['career_level'] == 'Entry', 'job_listings'].values[0], 2)
+
+if __name__ == '__main__':
+    unittest.main(argv=[''], exit=False)
+
+
+
