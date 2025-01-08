@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from datetime import datetime
 from main import clean_nyc_jobs_data
 
@@ -56,6 +57,7 @@ if __name__ == '__main__':
 
 
 
+
 class TestTimeGraphJobListings(unittest.TestCase):
 
     def setUp(self):
@@ -65,45 +67,61 @@ class TestTimeGraphJobListings(unittest.TestCase):
         })
         # Add some NaN values to test error handling
         self.mock_data.loc[10:15, 'posting_date'] = np.nan
+        # Convert posting date to datetime
+        self.mock_data['posting_date'] = pd.to_datetime(self.mock_data['posting_date'], errors='coerce')
 
     def test_date_conversion(self):
-        # Test if dates are correctly converted
-        self.mock_data['posting_date'] = pd.to_datetime(self.mock_data['posting_date'], errors='coerce')
+        # Test if dates are correctly converted to datetime
         self.assertTrue(pd.api.types.is_datetime64_any_dtype(self.mock_data['posting_date']))
+        # Test if NaN values are handled correctly
+        self.assertEqual(self.mock_data['posting_date'].isna().sum(), 6)
 
     def test_date_range(self):
         # Test if the date range is calculated correctly
         earliest_date = self.mock_data['posting_date'].min()
         latest_date = self.mock_data['posting_date'].max()
-        self.assertEqual(earliest_date, pd.Timestamp('2021-01-01'))
-        self.assertEqual(latest_date, pd.Timestamp('2021-04-10'))
+        expected_range = pd.Timestamp('2021-04-10') - pd.Timestamp('2021-01-01')
+        actual_range = latest_date - earliest_date
+        self.assertEqual(actual_range.days, expected_range.days)
 
     def test_monthly_post_counts(self):
         # Test if monthly post counts are calculated correctly
         monthly_posts = self.mock_data.groupby(self.mock_data['posting_date'].dt.to_period('M')).size()
+        # January should have 25 posts (31 days - 6 NaN values)
+        self.assertEqual(monthly_posts.loc['2021-01'], 25)
+        # Check total number of months
         self.assertEqual(len(monthly_posts), 4)  # Jan, Feb, Mar, Apr
-        self.assertEqual(monthly_posts.loc['2021-01'], 31)  # 31 days in Jan
 
     def test_yearly_post_counts(self):
         # Test if yearly post counts are calculated correctly
         yearly_posts = self.mock_data.groupby(self.mock_data['posting_date'].dt.year).size()
-        self.assertEqual(yearly_posts[2021], 100 - 6)  # 100 total rows - 6 NaN rows
+        # Should have 94 posts in 2021 (100 total - 6 NaN)
+        self.assertEqual(yearly_posts[2021], 94)
+        # Should only have data for 2021
+        self.assertEqual(len(yearly_posts), 1)
 
-    def test_plot_generation(self):
-        # Test if the plot is generated without errors
-        try:
-            monthly_posts = self.mock_data.groupby(self.mock_data['posting_date'].dt.to_period('M')).size()
-            plt.figure(figsize=(15, 6))
-            monthly_posts.plot(kind='line', marker='o')
-            plt.title('Number of Job Postings Over Time', fontsize=15)
-            plt.xlabel('Date', fontsize=15)
-            plt.ylabel('Number of Postings', fontsize=15)
-            plt.xticks(rotation=45)
-            plt.grid(True, linestyle='--', alpha=0.7)
-            plt.tight_layout()
-            plt.close()  # Close the plot after testing
-        except Exception as e:
-            self.fail(f"Plot generation failed with error: {e}")
+    def test_plot_attributes(self):
+        # Test if the plot is generated with correct attributes
+        monthly_posts = self.mock_data.groupby(self.mock_data['posting_date'].dt.to_period('M')).size()
+        fig, ax = plt.subplots(figsize=(15, 6))
+        monthly_posts.plot(kind='line', marker='o', ax=ax)
+        ax.set_title('Number of Job Postings Over Time', fontsize=15)
+        ax.set_xlabel('Date', fontsize=15)
+        ax.set_ylabel('Number of Postings', fontsize=15)
+        ax.grid(True, linestyle='--', alpha=0.7)
+        
+        # Test figure size
+        self.assertEqual(fig.get_size_inches().tolist(), [15, 6])
+        
+        # Test plot title and labels
+        self.assertEqual(ax.get_title(), 'Number of Job Postings Over Time')
+        self.assertEqual(ax.get_xlabel(), 'Date')
+        self.assertEqual(ax.get_ylabel(), 'Number of Postings')
+        
+        # Test if grid is enabled
+        self.assertTrue(ax.get_xgridlines()[0].get_visible())
+        
+        plt.close()  # Close the plot after testing
 
 if __name__ == '__main__':
     unittest.main(argv=[''], exit=False)

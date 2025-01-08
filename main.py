@@ -94,7 +94,7 @@ def time_graph_job_listings():
     print(yearly_posts.to_string())
 
     # Show distribution by month (across all years)
-    monthly_distribution = cleaned_df.groupby(cleaned_df['Posting Date'].dt.month).size()
+    monthly_distribution = cleaned_df.groupby(cleaned_df['posting_date'].dt.month).size()
     print("\
     Postings by month (all years combined):")
     print(monthly_distribution.to_string())
