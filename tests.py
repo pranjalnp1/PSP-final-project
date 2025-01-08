@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 from main import clean_nyc_jobs_data
+from main import time_graph_job_listings
 
 class TestNYCJobsDataCleaning(unittest.TestCase):
     def setUp(self):
