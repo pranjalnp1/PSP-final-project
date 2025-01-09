@@ -102,7 +102,7 @@ def time_graph_job_listings():
 
 
 
-def current_tech_positions(df):
+def current_tech_positions(cleaned_df):
     # Filter for tech-related jobs based on keywords in 'business_title' and 'job_description'
     tech_keywords = [ 'software', 'developer', 'programming', 'coder', 'full stack', 'frontend', 'backend',
                 'web developer', 'application developer' 'data scientist', 'data analyst', 'machine learning', 'ai ', 'artificial intelligence',
@@ -145,7 +145,7 @@ def current_tech_positions(df):
 current_tech_positions(cleaned_df)
 
 
-def categorise_entry_level_roles(df):
+def categorize_entry_level_roles(df):
     # Define disciplines and their associated keywords with expanded terms
     disciplines = {
         'Software Engineering': [
@@ -235,7 +235,7 @@ def categorise_entry_level_roles(df):
     return analysis_df
 
 # Run the function and display the results
-entry_level_analysis = categorise_entry_level_roles(cleaned_df)
+entry_level_analysis = categorize_entry_level_roles(cleaned_df)
 print("\
 Detailed Analysis of Entry-Level & Internship Tech Roles:")
 print(entry_level_analysis.to_string())
