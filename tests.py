@@ -6,6 +6,7 @@ from datetime import datetime
 from main import clean_nyc_jobs_data
 from main import time_graph_job_listings
 from main import current_tech_positions
+from main import categorise_entry_level_roles
 
 class TestNYCJobsDataCleaning(unittest.TestCase):
     def setUp(self):
@@ -124,8 +125,6 @@ if __name__ == '__main__':
     unittest.main(argv=[''], exit=False)
 
 
-
-
 class TestCurrentTechPositions(unittest.TestCase):
 
     def setUp(self):
@@ -167,6 +166,88 @@ class TestCurrentTechPositions(unittest.TestCase):
         job_counts = tech_jobs['career_level'].value_counts().reset_index()
         job_counts.columns = ['career_level', 'job_listings']
         self.assertEqual(job_counts.loc[job_counts['career_level'] == 'Entry', 'job_listings'].values[0], 2)
+
+if __name__ == '__main__':
+    unittest.main(argv=[''], exit=False)
+
+
+class TestEntryLevelRoles(unittest.TestCase):
+    def setUp(self):
+        # Create a mock dataset for testing
+        self.mock_data = pd.DataFrame({
+            'business_title': [
+                'Entry Level Software Engineer',
+                'Junior Data Analyst',
+                'Cybersecurity Intern',
+                'IT Support Associate',
+                'Senior Software Engineer',
+                'Entry Level Marketing',
+                'Junior QA Engineer',
+                'Cloud Architecture Trainee'
+            ],
+            'job_description': [
+                'Develop software applications using Python',
+                'Analyze data and create visualizations',
+                'Monitor and secure systems',
+                'Provide technical support',
+                'Lead software development team',
+                'Create marketing campaigns',
+                'Test software applications',
+                'Design cloud solutions'
+            ]
+        })
+        
+    def test_entry_level_filtering(self):
+        """Test if entry-level roles are correctly identified"""
+        result = categorise_entry_level_roles(self.mock_data)
+        # Should only count entry-level tech roles (6 out of 8 in mock data)
+        self.assertEqual(len(result), 6)
+        
+    def test_discipline_assignment(self):
+        """Test if disciplines are correctly assigned"""
+        result = categorise_entry_level_roles(self.mock_data)
+        disciplines = result.index.tolist()
+        
+        # Check if specific disciplines are present
+        expected_disciplines = [
+            'Software Engineering',
+            'Data Science & Analytics',
+            'Cybersecurity',
+            'IT & Systems',
+            'QA & Testing'
+        ]
+        for discipline in expected_disciplines:
+            self.assertIn(discipline, disciplines)
+            
+    def test_percentage_calculation(self):
+        """Test if percentages are calculated correctly"""
+        result = categorise_entry_level_roles(self.mock_data)
+        total_percentage = result['Percentage'].sum()
+        self.assertAlmostEqual(total_percentage, 100.0, places=1)
+        
+    def test_non_tech_exclusion(self):
+        """Test if non-tech roles are excluded"""
+        result = categorise_entry_level_roles(self.mock_data)
+        # Marketing role should be excluded
+        self.assertNotIn('Marketing', result.index)
+        
+    def test_count_values(self):
+        """Test if count values are integers"""
+        result = categorise_entry_level_roles(self.mock_data)
+        self.assertTrue(all(isinstance(count, (int, np.integer)) for count in result['Count']))
+        
+    def test_empty_dataframe(self):
+        """Test handling of empty dataframe"""
+        empty_df = pd.DataFrame(columns=['business_title', 'job_description'])
+        result = categorise_entry_level_roles(empty_df)
+        self.assertEqual(len(result), 0)
+        
+    def test_missing_values(self):
+        """Test handling of missing values"""
+        df_with_na = self.mock_data.copy()
+        df_with_na.loc[0, 'job_description'] = None
+        result = categorise_entry_level_roles(df_with_na)
+        self.assertTrue(len(result) > 0)  # Should still process other valid entries
 
 if __name__ == '__main__':
     unittest.main(argv=[''], exit=False)

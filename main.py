@@ -145,7 +145,7 @@ def current_tech_positions(cleaned_df):
 current_tech_positions(cleaned_df)
 
 
-def categorize_entry_level_roles(df):
+def categorise_entry_level_roles(df):
     # Define disciplines and their associated keywords with expanded terms
     disciplines = {
         'Software Engineering': [
@@ -189,13 +189,20 @@ def categorize_entry_level_roles(df):
                 return discipline
         return None  # Return None if no tech discipline matches
 
+    # Handle empty DataFrame
+    if df.empty:
+        return pd.DataFrame(columns=['Count', 'Percentage'])
+
     # Filter for entry level and internship roles
     entry_keywords = ['entry level', 'entry-level', 'intern', 'internship', 'junior', 'associate', 'trainee']
-    entry_roles = df[
-        df.apply(lambda x: any(keyword in str(x['business_title']).lower() or 
-                              keyword in str(x['job_description']).lower() 
-                              for keyword in entry_keywords), axis=1)
-    ]
+    entry_mask = df.apply(lambda x: any(keyword in str(x['business_title']).lower() or 
+                          keyword in str(x['job_description']).lower() 
+                          for keyword in entry_keywords), axis=1)
+    entry_roles = df.loc[entry_mask].copy()  # Use .loc and copy to avoid SettingWithCopyWarning
+
+    # Handle empty result after filtering
+    if entry_roles.empty:
+        return pd.DataFrame(columns=['Count', 'Percentage'])
 
     # Assign disciplines to entry level roles
     entry_roles['Discipline'] = entry_roles.apply(
@@ -204,6 +211,10 @@ def categorize_entry_level_roles(df):
 
     # Remove non-tech roles (where Discipline is None)
     entry_roles = entry_roles[entry_roles['Discipline'].notna()]
+
+    # Handle case where no tech roles are found
+    if entry_roles.empty:
+        return pd.DataFrame(columns=['Count', 'Percentage'])
 
     # Get the distribution of roles by discipline
     discipline_distribution = entry_roles['Discipline'].value_counts()
@@ -214,28 +225,30 @@ def categorize_entry_level_roles(df):
         'Percentage': (discipline_distribution / discipline_distribution.sum() * 100).round(1)
     })
 
+    # Ensure percentages sum to exactly 100%
+    if not analysis_df.empty:
+        total = analysis_df['Percentage'].sum()
+        if total != 100.0:
+            # Adjust the last row to make the total exactly 100%
+            adjustment = 100.0 - total
+            analysis_df.iloc[-1, analysis_df.columns.get_loc('Percentage')] += adjustment
+
     # Plot the distribution
     plt.figure(figsize=(12, 6))
-    bars = plt.bar(range(len(discipline_distribution)), discipline_distribution, color='skyblue')
-    plt.title('Distribution of Entry-Level & Internship Tech Roles by Discipline', fontsize=14, pad=20)
+    sns.barplot(x=analysis_df.index, y=analysis_df['Count'], palette='viridis')
+    plt.title('Distribution of Entry-Level Tech Roles in NYC Jobs', fontsize=16)
     plt.xlabel('Discipline', fontsize=12)
-    plt.ylabel('Number of Roles', fontsize=12)
-    plt.xticks(range(len(discipline_distribution)), discipline_distribution.index, rotation=45, ha='right')
-    
-    # Add value labels on top of each bar
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height,
-                f'{int(height)}',
-                ha='center', va='bottom')
-    
+    plt.ylabel('Number of Positions', fontsize=12)
+    plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.show()
 
     return analysis_df
 
+
+
 # Run the function and display the results
-entry_level_analysis = categorize_entry_level_roles(cleaned_df)
+entry_level_analysis = categorise_entry_level_roles(cleaned_df)
 print("\
 Detailed Analysis of Entry-Level & Internship Tech Roles:")
 print(entry_level_analysis.to_string())
