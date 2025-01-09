@@ -53,7 +53,6 @@ print(cleaned_df.head())
 print(cleaned_df.info())
 #comment
 
-
 def time_graph_job_listings():
     date_columns = [col for col in cleaned_df.columns if 'date' in col.lower()]
 
@@ -99,9 +98,6 @@ def time_graph_job_listings():
     Postings by month (all years combined):")
     print(monthly_distribution.to_string())
 
-
-
-
 def current_tech_positions(cleaned_df):
     # Filter for tech-related jobs based on keywords in 'business_title' and 'job_description'
     tech_keywords = [ 'software', 'developer', 'programming', 'coder', 'full stack', 'frontend', 'backend',
@@ -143,7 +139,6 @@ def current_tech_positions(cleaned_df):
     plt.show()
 
 current_tech_positions(cleaned_df)
-
 
 def categorise_entry_level_roles(df):
     # Define disciplines and their associated keywords with expanded terms
@@ -246,9 +241,66 @@ def categorise_entry_level_roles(df):
     return analysis_df
 
 
-
 # Run the function and display the results
 entry_level_analysis = categorise_entry_level_roles(cleaned_df)
 print("\
 Detailed Analysis of Entry-Level & Internship Tech Roles:")
 print(entry_level_analysis.to_string())
+
+
+
+
+# Filter for tech jobs based on disciplines
+def is_tech_job(title, description):
+    tech_keywords = [
+        'software engineer', 'developer', 'programmer', 'data scientist', 'data analyst',
+        'machine learning', 'cybersecurity', 'security engineer', 'it support', 'qa engineer',
+        'cloud architect', 'solutions architect', 'network engineer', 'systems admin',
+        'technical support', 'web developer', 'mobile developer'
+    ]
+    title = str(title).lower()
+    description = str(description).lower()
+    return any(keyword in title or keyword in description for keyword in tech_keywords)
+
+cleaned_df['is_tech_job'] = cleaned_df.apply(lambda x: is_tech_job(x['business_title'], x['job_description']), axis=1)
+
+# Filter for entry-level/student tech jobs
+def is_entry_level(title, description):
+    entry_keywords = ['entry level', 'entry-level', 'intern', 'internship', 'junior', 'associate', 'trainee']
+    title = str(title).lower()
+    description = str(description).lower()
+    return any(keyword in title or keyword in description for keyword in entry_keywords)
+
+cleaned_df['is_entry_level'] = cleaned_df.apply(lambda x: is_entry_level(x['business_title'], x['job_description']), axis=1)
+
+# Group by Posting Date and count tech jobs and entry-level tech jobs
+df_tech_jobs = cleaned_df[cleaned_df['is_tech_job']].groupby('posting_date').size().reset_index(name='Tech Jobs Count')
+df_entry_level_tech_jobs = cleaned_df[(cleaned_df['is_tech_job']) & (cleaned_df['is_entry_level'])].groupby('posting_date').size().reset_index(name='Entry Level Tech Jobs Count')
+
+# Plot the line graphs
+plt.figure(figsize=(14, 7))
+plt.plot(df_tech_jobs['posting_date'], df_tech_jobs['Tech Jobs Count'], label='All Tech Jobs', color='blue')
+plt.title('All Tech Jobs Opened Over Time', fontsize=16)
+plt.xlabel('Posting Date', fontsize=12)
+plt.ylabel('Number of Jobs', fontsize=12)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(14, 7))
+plt.plot(df_entry_level_tech_jobs['posting_date'], df_entry_level_tech_jobs['Entry Level Tech Jobs Count'], label='Entry Level Tech Jobs', color='green')
+plt.title('Entry Level and Student Tech Jobs Opened Over Time', fontsize=16)
+plt.xlabel('Posting Date', fontsize=12)
+plt.ylabel('Number of Jobs', fontsize=12)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Print some statistics
+print("\
+Total number of tech jobs:", len(cleaned_df[cleaned_df['is_tech_job']]))
+print("Total number of entry-level tech jobs:", len(cleaned_df[(cleaned_df['is_tech_job']) & (cleaned_df['is_entry_level'])]))
+
+
