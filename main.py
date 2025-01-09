@@ -2,12 +2,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from collections import Counter
 import re
 from io import StringIO
 
 
 filepath = "nycJobs.csv"
 df = pd.read_csv(filepath)
+
+tech_keywords = [ 'software', 'developer', 'programming', 'coder', 'full stack', 'frontend', 'backend',
+                'web developer', 'application developer' 'data scientist', 'data analyst', 'machine learning', 'ai ', 'artificial intelligence',
+                'analytics', 'big data', 'data engineer', 'statistics', 'statistical''security', 'cyber', 'information security', 'infosec', 'network security',
+                'security analyst', 'security engineer''it ', 'information technology', 'systems admin', 'network admin', 'database admin',
+                'system engineer', 'infrastructure', 'devops', 'cloud' 'computer', 'technical', 'technology', 'sql', 'python', 'java', 'javascript',
+                'analyst programmer', 'computer associate']
 
 
 # Function to clean the dataset
@@ -99,13 +107,7 @@ def time_graph_job_listings():
     print(monthly_distribution.to_string())
 
 def current_tech_positions(cleaned_df):
-    # Filter for tech-related jobs based on keywords in 'business_title' and 'job_description'
-    tech_keywords = [ 'software', 'developer', 'programming', 'coder', 'full stack', 'frontend', 'backend',
-                'web developer', 'application developer' 'data scientist', 'data analyst', 'machine learning', 'ai ', 'artificial intelligence',
-                'analytics', 'big data', 'data engineer', 'statistics', 'statistical''security', 'cyber', 'information security', 'infosec', 'network security',
-                'security analyst', 'security engineer''it ', 'information technology', 'systems admin', 'network admin', 'database admin',
-                'system engineer', 'infrastructure', 'devops', 'cloud' 'computer', 'technical', 'technology', 'sql', 'python', 'java', 'javascript',
-                'analyst programmer', 'computer associate']
+
 
     # Combine title and description for filtering
     cleaned_df['combined_text'] = cleaned_df['business_title'].str.lower() + ' ' + cleaned_df['job_description'].str.lower()
@@ -304,3 +306,117 @@ Total number of tech jobs:", len(cleaned_df[cleaned_df['is_tech_job']]))
 print("Total number of entry-level tech jobs:", len(cleaned_df[(cleaned_df['is_tech_job']) & (cleaned_df['is_entry_level'])]))
 
 
+
+
+# Define skill categories globally
+skill_categories = {
+    'Programming': [
+        'python', 'java', 'javascript', 'c++', 'c#', '.net', 'typescript', 
+        'ruby', 'php', 'r programming', 'swift', 'go lang', 'kotlin', 'scala',
+        'perl', 'shell scripting', 'powershell', 'bash'
+    ],
+    'Web/Frontend': [
+        'html', 'css', 'react', 'angular', 'vue', 'jquery', 'bootstrap',
+        'sass', 'webpack', 'node.js', 'nodejs', 'express.js', 'web services',
+        'rest api', 'soap', 'xml', 'json'
+    ],
+    'Backend/Frameworks': [
+        'django', 'flask', 'spring', 'spring boot', 'laravel', 'rails',
+        'asp.net', 'hibernate', 'maven', 'microservices', 'api development'
+    ],
+    'Cloud/DevOps': [
+        'aws', 'azure', 'gcp', 'google cloud', 'cloud computing',
+        'docker', 'kubernetes', 'jenkins', 'ci/cd', 'terraform', 'ansible',
+        'puppet', 'chef', 'containerization', 'virtualization', 'vmware'
+    ],
+    'Version Control': [
+        'git', 'github', 'gitlab', 'bitbucket', 'svn', 'version control'
+    ],
+    'Databases': [
+        'sql', 'mysql', 'postgresql', 'oracle', 'mongodb', 'nosql', 
+        'redis', 'elasticsearch', 'cassandra', 'database administration',
+        'database design', 'pl/sql', 't-sql'
+    ],
+    'Data Science/Analytics': [
+        'machine learning', 'deep learning', 'artificial intelligence', 
+        'data mining', 'pandas', 'numpy', 'scipy', 'scikit-learn',
+        'tensorflow', 'pytorch', 'tableau', 'power bi', 'data visualization',
+        'statistics', 'big data', 'hadoop', 'spark', 'data warehouse',
+        'etl', 'data pipeline'
+    ],
+    'Cybersecurity': [
+        'cybersecurity', 'information security', 'network security',
+        'penetration testing', 'vulnerability assessment', 'firewall',
+        'encryption', 'siem', 'splunk', 'ids/ips', 'security+',
+        'cissp', 'ethical hacking', 'incident response'
+    ],
+    'IT Infrastructure': [
+        'networking', 'tcp/ip', 'dns', 'dhcp', 'active directory',
+        'windows server', 'linux', 'unix', 'system administration',
+        'network administration', 'cisco', 'routing', 'switching',
+        'load balancing', 'vpn', 'san', 'nas'
+    ],
+    'Project Management': [
+        'agile', 'scrum', 'kanban', 'jira', 'confluence', 'project management',
+        'sdlc', 'waterfall', 'prince2', 'pmp', 'itil'
+    ]
+}
+
+# Function to extract skills
+def extract_skills(text):
+    text = text.lower()
+    matches = {}
+    for category, keywords in skill_categories.items():
+        category_matches = [kw for kw in keywords if kw in text]
+        if category_matches:
+            matches[category] = category_matches
+    return matches
+
+# Process each job posting
+skill_mentions = {category: Counter() for category in skill_categories}
+tech_jobs = cleaned_df[cleaned_df['combined_text'].str.contains('|'.join(tech_keywords), na=False)]
+
+
+# Iterate through tech jobs
+for _, job in tech_jobs.iterrows():
+    # Combine relevant text fields
+    text = ' '.join([
+        str(job['job_description']),
+        str(job['minimum_qual_requirements']),
+        str(job['preferred_skills']),
+        str(job['additional_information'])
+    ])
+    
+    # Extract skills for this job
+    job_skills = extract_skills(text)
+    
+    # Update counters
+    for category, skills in job_skills.items():
+        skill_mentions[category].update(skills)
+
+# Create visualizations for each category
+for category, counts in skill_mentions.items():
+    if counts:  # Only plot if there are skills found in this category
+        plt.figure(figsize=(12, 6))
+        skills = list(counts.keys())
+        frequencies = list(counts.values())
+        
+        # Sort by frequency
+        sorted_indices = sorted(range(len(frequencies)), key=lambda k: frequencies[k], reverse=True)
+        skills = [skills[i] for i in sorted_indices]
+        frequencies = [frequencies[i] for i in sorted_indices]
+        
+        # Plot top 10 skills in each category
+        plt.barh(skills[:10], frequencies[:10], color='skyblue')
+        plt.xlabel('Number of Job Postings')
+        plt.title(f'Top Skills in {category}')
+        plt.gca().invert_yaxis()
+        plt.tight_layout()
+        plt.show()
+        
+        # Print the statistics for each category
+        print(f"\
+Top Skills in {category}:")
+        for skill, count in zip(skills[:10], frequencies[:10]):
+            percentage = (count / len(tech_jobs)) * 100
+            print(f"{skill}: {count} jobs ({percentage:.1f}% of tech jobs)")

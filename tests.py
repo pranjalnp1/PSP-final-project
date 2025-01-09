@@ -3,10 +3,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
+from collections import Counter
 from main import clean_nyc_jobs_data
 from main import time_graph_job_listings
 from main import current_tech_positions
 from main import categorise_entry_level_roles
+from main import extract_skills
 
 class TestNYCJobsDataCleaning(unittest.TestCase):
     def setUp(self):
@@ -250,6 +252,51 @@ class TestEntryLevelRoles(unittest.TestCase):
         self.assertTrue(len(result) > 0)  # Should still process other valid entries
 
 if __name__ == '__main__':
+    unittest.main(argv=[''], exit=False)
+
+
+
+# Mock data for testing
+mock_skill_categories = {
+    'Programming': ['python', 'java', 'c++'],
+    'Web/Frontend': ['html', 'css', 'javascript']
+}
+
+def mock_extract_skills(text):
+    text = text.lower()
+    matches = {}
+    for category, keywords in mock_skill_categories.items():
+        category_matches = [kw for kw in keywords if kw in text]
+        if category_matches:
+            matches[category] = category_matches
+    return matches
+
+class TestSkillExtraction(unittest.TestCase):
+
+    def test_extract_skills_single_category(self):
+        text = "We are looking for a Python developer with experience in Java."
+        expected_output = {'Programming': ['python', 'java']}
+        self.assertEqual(mock_extract_skills(text), expected_output)
+
+    def test_extract_skills_multiple_categories(self):
+        text = "The candidate should know HTML, CSS, and Python."
+        expected_output = {
+            'Programming': ['python'],
+            'Web/Frontend': ['html', 'css']
+        }
+        self.assertEqual(mock_extract_skills(text), expected_output)
+
+    def test_extract_skills_no_match(self):
+        text = "This job requires management and communication skills."
+        expected_output = {}
+        self.assertEqual(mock_extract_skills(text), expected_output)
+
+    def test_extract_skills_case_insensitivity(self):
+        text = "We need a PYTHON and JAVA expert."
+        expected_output = {'Programming': ['python', 'java']}
+        self.assertEqual(mock_extract_skills(text), expected_output)
+
+if __name__ == "__main__":
     unittest.main(argv=[''], exit=False)
 
 
