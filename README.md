@@ -4,8 +4,6 @@ This repositry contains the code for visualisations for a report written analysi
 ## 1. Overview  
 This repository contains the code used for the analysis of exploring the relationship between COVID-19 vaccinations and case numbers over time. By analysing temporal patterns and performing lag-based correlations, this project seeks to understand whether vaccination efforts have had a delayed impact on reducing COVID-19 cases.  
 
-The hypothesis explored in this analysis is:  
-> "Vaccination efforts have a delayed effect on reducing COVID-19 cases, with variations based on regional factors"  
 
 ## 2. Project Structure  
 The repository is organized as follows:  
