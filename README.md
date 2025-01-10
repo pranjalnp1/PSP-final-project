@@ -1,4 +1,4 @@
-# The current State                     t
+# The current State of the New York tech job market
 
 ## Overview
 
@@ -7,13 +7,6 @@ Briefly explain what your project is about. Provide a high-level description of 
 Example:
 > This project is a web-based application that allows users to create and manage to-do lists. It is built using React for the frontend and Node.js for the backend.
 
-## Features
-
-List the main features of your project in bullet points. Make it easy for the reader to understand the core functionalities at a glance.
-
-- Feature 1: Description of feature
-- Feature 2: Description of feature
-- Feature 3: Description of feature
 
 ## Installation
 
@@ -23,12 +16,13 @@ Provide a step-by-step guide on how to get your project up and running locally.
 
 List any tools, libraries, or platforms that need to be installed.
 
-- Node.js
-- Python 3.x (if applicable)
-- Any other dependencies
+-pandas
+-numpy
+-matplotlib
+-seaborn
 
 ### Steps to Install
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/project-name.git
+   git clone https://github.com/pranjalnp1/PSP-final-project.git
